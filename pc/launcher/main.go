@@ -98,6 +98,13 @@ func install(self string) bool {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return false
 	}
+	if _, err := os.Stat(exe); err == nil {
+		old := exe + ".old"
+		os.Remove(old)
+		if err := os.Rename(exe, old); err != nil {
+			return false
+		}
+	}
 	if err := copyFile(self, exe); err != nil {
 		return false
 	}
@@ -107,7 +114,7 @@ func install(self string) bool {
 		k.SetStringValue("DisplayName", appName)
 		k.SetStringValue("DisplayIcon", exe+",0")
 		k.SetStringValue("Publisher", "Larsen")
-		k.SetStringValue("DisplayVersion", "1.0")
+		k.SetStringValue("DisplayVersion", "1.2")
 		k.SetStringValue("InstallLocation", dir)
 		k.SetStringValue("UninstallString", `"`+exe+`" --uninstall`)
 		k.SetDWordValue("NoModify", 1)
@@ -137,6 +144,7 @@ func main() {
 	}
 	self, _ := os.Executable()
 	_, exe, _, _ := paths()
+	os.Remove(exe + ".old")
 	if !strings.EqualFold(filepath.Clean(self), filepath.Clean(exe)) {
 		if install(self) {
 			msg("Larsens World ist installiert!\nDu findest die App ab jetzt auf dem Desktop und im Startmenü.\nDie heruntergeladene Datei kannst du löschen.", 0x40)
@@ -164,7 +172,7 @@ func main() {
 	w := webview2.NewWithOptions(webview2.WebViewOptions{
 		AutoFocus: true,
 		DataPath:  data,
-		WindowOptions: webview2.WindowOptions{Title: appName, Width: uint(1280 * dpi / 96), Height: uint(860 * dpi / 96), IconId: 1, Center: true},
+		WindowOptions: webview2.WindowOptions{Title: appName, Width: uint(1280 * dpi / 96), Height: uint(860 * dpi / 96), IconId: 2, Center: true},
 	})
 	if w == nil {
 		msg("Für Larsens World fehlt die Microsoft WebView2-Komponente.\nSie öffnet sich jetzt zum Herunterladen. Danach Larsens World einfach nochmal starten.", 0x40)
