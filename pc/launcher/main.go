@@ -32,6 +32,20 @@ func msg(text string, flags uintptr) int {
 	return int(r)
 }
 
+// schwarze Titelleiste (Windows 10: Dark Mode, Windows 11: komplett schwarz mit weißer Schrift)
+func darkTitle(hwnd uintptr) {
+	dwm := syscall.NewLazyDLL("dwmapi.dll").NewProc("DwmSetWindowAttribute")
+	if dwm.Find() != nil || hwnd == 0 {
+		return
+	}
+	set := func(attr uintptr, v uint32) { dwm.Call(hwnd, attr, uintptr(unsafe.Pointer(&v)), 4) }
+	set(20, 1)          // DWMWA_USE_IMMERSIVE_DARK_MODE
+	set(19, 1)          // ältere Windows-10-Versionen
+	set(35, 0x00000000) // DWMWA_CAPTION_COLOR: schwarz
+	set(34, 0x00000000) // DWMWA_BORDER_COLOR: schwarz
+	set(36, 0x00FFFFFF) // DWMWA_TEXT_COLOR: weiß
+}
+
 func hidden(name string, args ...string) *exec.Cmd {
 	c := exec.Command(name, args...)
 	c.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000}
@@ -133,10 +147,24 @@ func main() {
 	}
 	data := filepath.Join(os.Getenv("APPDATA"), "LarsensWorld")
 	_ = os.MkdirAll(data, 0o755)
+	// gestochen scharf bei 125 %, 150 %, 4K usw.: Windows nicht mehr strecken lassen
+	if p := user32.NewProc("SetProcessDpiAwarenessContext"); p.Find() == nil {
+		p.Call(^uintptr(3)) // DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 (-4)
+	} else {
+		user32.NewProc("SetProcessDPIAware").Call()
+	}
+	dpi := uintptr(96)
+	if p := user32.NewProc("GetDpiForSystem"); p.Find() == nil {
+		if d, _, _ := p.Call(); d > 0 {
+			dpi = d
+		}
+	}
+	// dunkler Hintergrund schon während des Ladens (kein weißes Aufblitzen)
+	os.Setenv("WEBVIEW2_DEFAULT_BACKGROUND_COLOR", "FF0B0D12")
 	w := webview2.NewWithOptions(webview2.WebViewOptions{
 		AutoFocus: true,
 		DataPath:  data,
-		WindowOptions: webview2.WindowOptions{Title: appName, Width: 1280, Height: 860, IconId: 1, Center: true},
+		WindowOptions: webview2.WindowOptions{Title: appName, Width: uint(1280 * dpi / 96), Height: uint(860 * dpi / 96), IconId: 1, Center: true},
 	})
 	if w == nil {
 		msg("Für Larsens World fehlt die Microsoft WebView2-Komponente.\nSie öffnet sich jetzt zum Herunterladen. Danach Larsens World einfach nochmal starten.", 0x40)
@@ -144,6 +172,8 @@ func main() {
 		return
 	}
 	defer w.Destroy()
+	darkTitle(uintptr(w.Window()))
+	user32.NewProc("ShowWindow").Call(uintptr(w.Window()), 3) // maximiert starten
 	w.Navigate(appURL)
 	w.Run()
 }
