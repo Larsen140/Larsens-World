@@ -906,6 +906,8 @@ button,a,[data-act],[data-tab]{touch-action:manipulation;-webkit-tap-highlight-c
 .row{transition:background .2s}
 .row.done .title{transition:color .3s}
 @media (prefers-reduced-motion:reduce){.enter>*,.enter .pop-in,.check.pop,.curve polyline.draw,.tab[aria-selected="true"] svg.i,.toast:not([hidden]){animation:none!important}.btn,.chip,.card,.day,.preset,.check,.icon-btn{transition:none}}
+.lw-move{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+.lw-code{width:100%;min-height:64px;margin:6px 0;font:12px/1.35 ui-monospace,monospace;padding:8px 10px;border-radius:10px;border:1px solid color-mix(in srgb,var(--text) 18%,transparent);background:color-mix(in srgb,var(--bg) 70%,transparent);color:var(--text);resize:vertical;box-sizing:border-box}
 </style>
 
 <div class="liquid" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -2713,7 +2715,7 @@ function fbSettings(){const b=fbS();
   </section>`}
 /* ---------- Updates tab : newest first, one entry per release ---------- */
 const UPDATES=[
-  {v:'3.9',d:'11.11.2026',t:'Larsens World auf GitHub & als PC-App',items:[['n','Larsens World gibt es jetzt auch auf GitHub und als PC-App (exe).'],['n','In den Optionen unter Speicher: „Mit allen Daten auf GitHub öffnen“ nimmt Notizen, Trades, Einstellungen und Spielstände mit.'],['n','Die GitHub-Version lädt neue Versionen von selbst, nie mitten in einer Runde.']]},
+  {v:'3.9',d:'11.11.2026',t:'Larsens World auf GitHub & als PC-App',items:[['n','Larsens World gibt es jetzt auch auf GitHub und als eigene PC-App (exe) mit eigenem Fenster.'],['n','Die GitHub-Version lädt neue Versionen von selbst, nie mitten in einer Runde.']]},
   {v:'3.8',d:'11.11.2026',t:'Flying Bird nur im Vollbild',items:[['n','Flying Bird startet jetzt immer im Vollbild. Verlässt du das Vollbild, pausiert das Spiel und geht beim Weiterspielen wieder ins Vollbild.']]},
   {v:'3.7',d:'11.11.2026',t:'Max-Knopf',items:[['n','Neuer Max-Knopf bei Blackjack, Roulette, Slots und Okey: setzt dein ganzes Guthaben auf einmal.'],['n','Roulette: Tippe zuerst ein Feld an, dann auf Max, dann landet alles auf diesem Feld.']]},
   {v:'3.6',d:'11.11.2026',t:'Flying Bird: Stadt & neue Figuren',items:[['n','Neue Map Stadt: Hochhäuser aus Glas, Beton und Ziegeln, Straße mit Mittelstreifen und eine Skyline, deren Fenster nachts leuchten.'],['n','5 neue Figuren: Propeller-Frosch, Biene, Roboter, fliegende Pizza und Super-Katze mit Umhang. Alle mit Farbauswahl.'],['f','Flüssiger: Kein kurzes Ruckeln mehr, wenn neue Säulen erscheinen.'],['f','Kommt dein Handy nicht hinterher, passt das Spiel die Auflösung automatisch an, damit es weiter flüssig läuft.']]},
@@ -2940,6 +2942,14 @@ async function lwPack(){const raw=new TextEncoder().encode(JSON.stringify({v:1,a
   const cs=new Blob([raw]).stream().pipeThrough(new CompressionStream('gzip'));return b64u(new Uint8Array(await new Response(cs).arrayBuffer()))}
 async function lwUnpack(code){const ds=new Blob([ub64(code)]).stream().pipeThrough(new DecompressionStream('gzip'));return JSON.parse(await new Response(ds).text())}
 async function ghMove(){try{const code=await lwPack();const w=window.open(GH_URL+'#lwimport='+code,'_blank');if(!w)location.href=GH_URL+'#lwimport='+code;toast('GitHub-Version geöffnet, deine Daten kommen mit.')}catch(e){toast('Umzug hat nicht geklappt: '+(e&&e.message||e))}}
+async function lwCopy(){try{const code='LW1:'+await lwPack();try{await navigator.clipboard.writeText(code);toast('Daten kopiert. Jetzt in der App unter Optionen → Speicher einfügen.')}catch(e){const t=document.getElementById('lw-code');if(t){t.value=code;t.select();try{document.execCommand('copy');toast('Daten kopiert.')}catch(x){toast('Markiere den Code und kopiere ihn.')}}}}catch(e){toast('Kopieren hat nicht geklappt.')}}
+async function lwApply(d){if(!d||d.v!==1)throw new Error('Format');KINDS.forEach(k=>S[k]=Array.isArray(d[k])?d[k]:[]);S.settings=Object.assign(defaultSettings(),d.settings||{});saveLocal();cacheSettings();applyTheme();render();toast('Alle Daten übernommen: '+S.note.length+' Notizen, '+S.trade.length+' Trades.')}
+async function lwPaste(fromClip){let raw='';const t=document.getElementById('lw-code');
+  if(fromClip){try{raw=await navigator.clipboard.readText()}catch(e){toast('Kein Zugriff auf die Zwischenablage. Füge den Code ins Feld ein (Strg+V).');return}}else raw=t?t.value:'';
+  raw=String(raw||'').trim();const m=/lwimport=([A-Za-z0-9_-]+)/.exec(raw)||/^LW1:([A-Za-z0-9_-]+)$/.exec(raw);
+  if(!m){toast('Das ist kein gültiger Daten-Code.');return}
+  if(KINDS.some(k=>S[k].some(x=>!x.example))&&!confirm('Daten übernehmen? Was hier schon gespeichert ist, wird ersetzt.'))return;
+  try{await lwApply(await lwUnpack(m[1]))}catch(e){toast('Daten konnten nicht übernommen werden.')}}
 async function ghImportFromHash(){
   const m=/^#lwimport=([A-Za-z0-9_-]+)/.exec(location.hash||'');if(!m)return;
   try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}
@@ -3002,8 +3012,8 @@ function vSettings(){
   <section class="panel glass set-sec"><h3>Speicher</h3>
     <p class="note-txt">${online?'Deine Daten sind mit deinem Claude-Konto verknüpft und privat. Nur du siehst sie, auch wenn du die App mit anderen teilst. Jede Person, die die App öffnet, hat ihre eigenen Notizen, Trades und Spielstände.':'Deine Daten werden gerade nur in diesem Browser gespeichert. Melde dich bei Claude an, um sie geräteübergreifend zu sichern.'}</p>
     <p class="note-txt"><b>Als App aufs iPhone:</b> Link in Safari öffnen, Teilen-Symbol antippen, dann „Zum Home-Bildschirm“.</p>
-    ${IS_GH?'<p class="note-txt"><b>GitHub-Version:</b> Alles wird nur in diesem Browser gespeichert. KI-Chat und Angebote gibt es nur in der Claude-Version.</p>'
-      :'<p class="note-txt"><b>GitHub-Version / PC-App:</b> Öffnet Larsens World auf GitHub und nimmt alle Notizen, Trades, Einstellungen und Spielstände mit.</p><button class="btn sm" data-act="gh-move">Mit allen Daten auf GitHub öffnen</button>'}
+    ${IS_GH?'<p class="note-txt"><b>Speicher:</b> Alles wird auf diesem Gerät gespeichert. KI-Chat und Angebote gibt es in dieser Version nicht.</p>'
+      :'<p class="note-txt"><b>GitHub-Version / PC-App:</b> Nimm alle Notizen, Trades, Einstellungen und Spielstände mit.</p><button class="btn sm" data-act="gh-move">Mit allen Daten auf GitHub öffnen</button>'}
   </section>`;
 }
 
@@ -3128,6 +3138,9 @@ document.addEventListener('click',ev=>{
   const find=k=>S[k].find(x=>x.id===id);
   switch(a){
     case'gh-move':ghMove();break;
+    case'lw-copy':lwCopy();break;
+    case'lw-paste':lwPaste(false);break;
+    case'lw-paste-clip':lwPaste(true);break;
     case'close':case'close-scrim':closeSheet();break;
     case'sheet-del':if(el.dataset.confirm){sheetData.onDelete();closeSheet();render()}else{el.dataset.confirm='1';el.lastChild.textContent='Wirklich löschen?'}break;
     case'new-note':editNote();break;
