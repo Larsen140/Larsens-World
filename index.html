@@ -1116,7 +1116,8 @@ function applyTheme(){
 /* ---------- UI helpers ---------- */
 function toast(t){const el=$('#toast');el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2400)}
 /* GitHub-Version (larsen140.github.io/Larsens-World): läuft ohne Claude-Konto, Daten nur im Browser; KI-Chat und Angebote-Suche gibt es dort nicht */
-const IS_GH=/github\.io$/i.test(location.hostname),GH_URL='https://larsen140.github.io/Larsens-World/',GH_OFF={angebote:1,chat:1};
+const IS_GH=/github\.io$/i.test(location.hostname),GH_URL='https://larsen140.github.io/Larsens-World/',GH_OFF={angebote:1,chat:1},EXE_URL='https://github.com/Larsen140/Larsens-World/raw/main/pc/Larsens-World.exe';
+const IS_APP=(()=>{try{if(/[?&]app=1/.test(location.search))localStorage.setItem('lw:app','1');return localStorage.getItem('lw:app')==='1'}catch(e){return false}})();
 const HIDEABLE=IS_GH?{notizen:'Notizen',trading:'Trading'}:{notizen:'Notizen',trading:'Trading',angebote:'Angebote'};
 function visTabs(){const h=S.settings.hiddenTabs||{};return TABS.filter(([k])=>!h[k]&&!(IS_GH&&GH_OFF[k]))}
 const TABS=[['notizen','Notizen','notes'],['trading','Trading','trade'],['angebote','Angebote','tag'],['blackjack','Casino','spade'],['bird','Bird','bird'],['rad','Rad','wheel'],['chat','Chat','chat'],['updates','Updates','spark'],['optionen','Optionen','gear']];
@@ -2715,7 +2716,7 @@ function fbSettings(){const b=fbS();
   </section>`}
 /* ---------- Updates tab : newest first, one entry per release ---------- */
 const UPDATES=[
-  {v:'3.9',d:'11.11.2026',t:'Larsens World auf GitHub & als PC-App',items:[['n','Larsens World gibt es jetzt auch auf GitHub und als eigene PC-App (exe) mit eigenem Fenster.'],['n','Die GitHub-Version lädt neue Versionen von selbst, nie mitten in einer Runde.']]},
+  {v:'3.9',d:'11.11.2026',t:'Larsens World auf GitHub & als PC-App',items:[['n','Larsens World gibt es jetzt auch auf GitHub und als eigene PC-App (exe) mit eigenem Fenster.'],['n','Die PC-App installiert sich beim ersten Start selbst: Verknüpfung auf dem Desktop und im Startmenü, deinstallieren über die Windows-Einstellungen.'],['n','Die GitHub-Version lädt neue Versionen von selbst, nie mitten in einer Runde.']]},
   {v:'3.8',d:'11.11.2026',t:'Flying Bird nur im Vollbild',items:[['n','Flying Bird startet jetzt immer im Vollbild. Verlässt du das Vollbild, pausiert das Spiel und geht beim Weiterspielen wieder ins Vollbild.']]},
   {v:'3.7',d:'11.11.2026',t:'Max-Knopf',items:[['n','Neuer Max-Knopf bei Blackjack, Roulette, Slots und Okey: setzt dein ganzes Guthaben auf einmal.'],['n','Roulette: Tippe zuerst ein Feld an, dann auf Max, dann landet alles auf diesem Feld.']]},
   {v:'3.6',d:'11.11.2026',t:'Flying Bird: Stadt & neue Figuren',items:[['n','Neue Map Stadt: Hochhäuser aus Glas, Beton und Ziegeln, Straße mit Mittelstreifen und eine Skyline, deren Fenster nachts leuchten.'],['n','5 neue Figuren: Propeller-Frosch, Biene, Roboter, fliegende Pizza und Super-Katze mit Umhang. Alle mit Farbauswahl.'],['f','Flüssiger: Kein kurzes Ruckeln mehr, wenn neue Säulen erscheinen.'],['f','Kommt dein Handy nicht hinterher, passt das Spiel die Auflösung automatisch an, damit es weiter flüssig läuft.']]},
@@ -3012,7 +3013,7 @@ function vSettings(){
   <section class="panel glass set-sec"><h3>Speicher</h3>
     <p class="note-txt">${online?'Deine Daten sind mit deinem Claude-Konto verknüpft und privat. Nur du siehst sie, auch wenn du die App mit anderen teilst. Jede Person, die die App öffnet, hat ihre eigenen Notizen, Trades und Spielstände.':'Deine Daten werden gerade nur in diesem Browser gespeichert. Melde dich bei Claude an, um sie geräteübergreifend zu sichern.'}</p>
     <p class="note-txt"><b>Als App aufs iPhone:</b> Link in Safari öffnen, Teilen-Symbol antippen, dann „Zum Home-Bildschirm“.</p>
-    ${IS_GH?'<p class="note-txt"><b>Speicher:</b> Alles wird auf diesem Gerät gespeichert. KI-Chat und Angebote gibt es in dieser Version nicht.</p>'
+    ${IS_GH?'<p class="note-txt"><b>Speicher:</b> Alles wird auf diesem Gerät gespeichert. KI-Chat und Angebote gibt es in dieser Version nicht.</p>'+(IS_APP?'<p class="note-txt"><b>PC-App:</b> Deinstallieren über Windows-Einstellungen → Apps → Larsens World.</p>':'<p class="note-txt"><b>PC-App für Windows:</b> Herunterladen, starten, fertig. Sie installiert sich selbst mit Verknüpfung auf dem Desktop und im Startmenü.</p><a class="btn sm" href="'+EXE_URL+'" download>PC-App herunterladen</a>')
       :'<p class="note-txt"><b>GitHub-Version / PC-App:</b> Nimm alle Notizen, Trades, Einstellungen und Spielstände mit.</p><button class="btn sm" data-act="gh-move">Mit allen Daten auf GitHub öffnen</button>'}
   </section>`;
 }
