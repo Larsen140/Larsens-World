@@ -2716,6 +2716,7 @@ function fbSettings(){const b=fbS();
   </section>`}
 /* ---------- Updates tab : newest first, one entry per release ---------- */
 const UPDATES=[
+  {v:'4.0',d:'12.11.2026',t:'Neue PC-App',items:[['n','Die PC-App startet Larsens World jetzt über Microsoft Edge als eigenes Fenster: gestochen scharf, ohne Adressleiste.'],['n','Updates kommen bei jedem Öffnen automatisch, die App muss nie neu installiert werden.'],['f','Ohne Internet startet die zuletzt geladene Version.']]},
   {v:'3.9',d:'11.11.2026',t:'Larsens World auf GitHub & als PC-App',items:[['n','Larsens World gibt es jetzt auch auf GitHub und als eigene PC-App (exe) mit eigenem Fenster.'],['n','Die PC-App installiert sich beim ersten Start selbst: Verknüpfung auf dem Desktop und im Startmenü, deinstallieren über die Windows-Einstellungen.'],['n','Die GitHub-Version lädt neue Versionen von selbst, nie mitten in einer Runde.']]},
   {v:'3.8',d:'11.11.2026',t:'Flying Bird nur im Vollbild',items:[['n','Flying Bird startet jetzt immer im Vollbild. Verlässt du das Vollbild, pausiert das Spiel und geht beim Weiterspielen wieder ins Vollbild.']]},
   {v:'3.7',d:'11.11.2026',t:'Max-Knopf',items:[['n','Neuer Max-Knopf bei Blackjack, Roulette, Slots und Okey: setzt dein ganzes Guthaben auf einmal.'],['n','Roulette: Tippe zuerst ein Feld an, dann auf Max, dann landet alles auf diesem Feld.']]},
@@ -2963,12 +2964,13 @@ async function ghImportFromHash(){
 }
 /* GitHub-Version: neue Versionen von selbst laden, aber nie mitten in einer Runde */
 function ghUpdBusy(){try{return (typeof czBusy==='function'&&czBusy())||(typeof FB!=='undefined'&&(FB.state==='play'||FB.state==='ready'))||(typeof WF!=='undefined'&&WF.spinning)}catch(e){return false}}
-let ghBase=null,ghPending=false;
-async function ghStamp(){try{const r=await fetch(location.pathname+'?u='+Date.now(),{method:'HEAD',cache:'no-store'});const t=r.headers.get('etag')||r.headers.get('last-modified');return r.ok?t:null}catch(e){return null}}
-async function ghCheck(){if(ghPending)return;const st=await ghStamp();if(!st)return;if(ghBase===null){ghBase=st;return}if(st!==ghBase){ghPending=true;ghApply()}}
-function ghApply(){if(ghUpdBusy()){setTimeout(ghApply,3000);return}try{const l=+sessionStorage.getItem('lw:upd')||0;if(Date.now()-l<60000)return;sessionStorage.setItem('lw:upd',Date.now())}catch(e){}saveLocal();toast('Neue Version wird geladen…');setTimeout(()=>location.reload(),900)}
+/* Updates: version.txt im Repo mit APP_VERSION vergleichen, bei Abweichung einmal pro Version neu laden (nie mitten in einer Runde) */
+const APP_VERSION='4.0';let ghPending=false;
+async function ghCheck(){if(ghPending)return;let v='';try{const r=await fetch('version.txt?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;v=(await r.text()).trim()}catch(e){return}
+  if(!v||v===APP_VERSION)return;try{if(localStorage.getItem('lw:reloadedFor')===v)return}catch(e){}ghPending=true;ghApply(v)}
+function ghApply(v){if(ghUpdBusy()){setTimeout(()=>ghApply(v),3000);return}try{localStorage.setItem('lw:reloadedFor',v)}catch(e){}saveLocal();toast('Neue Version wird geladen…');setTimeout(()=>location.reload(),900)}
 if(IS_GH){try{const h=document.head;[['manifest','manifest.webmanifest'],['apple-touch-icon','icon-180.png'],['icon','icon-192.png']].forEach(([r,u])=>{const l=document.createElement('link');l.rel=r;l.href=u;h.appendChild(l)});if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}}
-if(IS_GH){setTimeout(ghCheck,1500);setInterval(ghCheck,120000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)ghCheck()});window.addEventListener('focus',()=>ghCheck())}
+if(IS_GH){setTimeout(ghCheck,800);setInterval(ghCheck,120000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)ghCheck()});window.addEventListener('focus',()=>ghCheck())}
 
 function vSettings(){
   const c=currentColors()||{bg:'#eef2f7',text:'#121722',accent:'#0a84ff',blob1:'#7dd3fc',blob2:'#f9a8d4',blob3:'#a7f3d0'};
@@ -3013,7 +3015,7 @@ function vSettings(){
   <section class="panel glass set-sec"><h3>Speicher</h3>
     <p class="note-txt">${online?'Deine Daten sind mit deinem Claude-Konto verknüpft und privat. Nur du siehst sie, auch wenn du die App mit anderen teilst. Jede Person, die die App öffnet, hat ihre eigenen Notizen, Trades und Spielstände.':'Deine Daten werden gerade nur in diesem Browser gespeichert. Melde dich bei Claude an, um sie geräteübergreifend zu sichern.'}</p>
     <p class="note-txt"><b>Als App aufs iPhone:</b> Link in Safari öffnen, Teilen-Symbol antippen, dann „Zum Home-Bildschirm“.</p>
-    ${IS_GH?'<p class="note-txt"><b>Speicher:</b> Alles wird auf diesem Gerät gespeichert. KI-Chat und Angebote gibt es in dieser Version nicht.</p>'+(IS_APP?'<p class="note-txt"><b>PC-App:</b> Deinstallieren über Windows-Einstellungen → Apps → Larsens World.</p>':'<p class="note-txt"><b>PC-App für Windows:</b> Herunterladen, starten, fertig. Sie installiert sich selbst mit Verknüpfung auf dem Desktop und im Startmenü.</p><a class="btn sm" href="'+EXE_URL+'" download>PC-App herunterladen</a>')
+    ${IS_GH?'<p class="note-txt"><b>Speicher:</b> Alles wird auf diesem Gerät gespeichert. KI-Chat und Angebote gibt es in dieser Version nicht.</p>'+(IS_APP?'<p class="note-txt"><b>PC-App:</b> Startet über Microsoft Edge im App-Modus und lädt immer die neueste Version.</p>':'<p class="note-txt"><b>PC-App für Windows:</b> Herunterladen und starten. Öffnet Larsens World als eigenes Fenster (über Edge), Updates kommen von selbst.</p><a class="btn sm" href="'+EXE_URL+'" download>PC-App herunterladen</a>')
       :'<p class="note-txt"><b>GitHub-Version / PC-App:</b> Nimm alle Notizen, Trades, Einstellungen und Spielstände mit.</p><button class="btn sm" data-act="gh-move">Mit allen Daten auf GitHub öffnen</button>'}
   </section>`;
 }

@@ -7,11 +7,12 @@ Notizen, Trading, Casino (Blackjack, Roulette, Slots, Okey), Flying Bird und Gl�
 ## PC-App für Windows
 **[⬇ Larsens World herunterladen](https://github.com/Larsen140/Larsens-World/raw/main/pc/Larsens-World.exe)**
 
-Datei starten, fertig: Sie installiert sich selbst (Verknüpfung auf dem Desktop und im Startmenü) und öffnet Larsens World in einem eigenen App-Fenster. Updates kommen automatisch von GitHub, ohne Internet startet die zuletzt geladene Version. Deinstallieren: Windows-Einstellungen → Apps → Larsens World.
+Die exe ist nur ein kleiner Starter (125 KB): Sie öffnet Larsens World in Microsoft Edge (sonst Chrome) im App-Modus, also als eigenes Fenster ohne Adressleiste. Weil immer die Version von GitHub geladen wird, kommen Updates von selbst – nie neu installieren. Tipp: Rechtsklick auf die exe → „An Taskleiste anheften“ bzw. Verknüpfung auf den Desktop.
 
 Windows zeigt beim ersten Start evtl. „Der Computer wurde durch Windows geschützt“, weil die Datei nicht signiert ist: **Weitere Informationen → Trotzdem ausführen**.
 
 ## Hinweise
 - Diese Version läuft ohne Claude-Konto: alles wird nur im jeweiligen Browser gespeichert.
 - KI-Chat und Angebote-Suche gibt es nur in der Claude-Version.
-- Quelltext der PC-App: `pc/launcher/main.go` (Go + github.com/jchv/go-webview2, gebaut mit `GOOS=windows go build -ldflags "-H windowsgui -s -w"`).
+- Updates: `version.txt` muss zu `APP_VERSION` in `index.html` passen; weicht sie ab, lädt die App einmal pro Version neu.
+- Quelltext des Starters: `pc/starter.c` + `pc/starter.rc`, gebaut mit `python3 -m ziglang cc -target x86_64-windows-gnu -municode -Wl,--subsystem,windows -Os -s starter.c starter.rc -o Larsens-World.exe`.
