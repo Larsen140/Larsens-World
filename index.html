@@ -2776,6 +2776,7 @@ function fbSettings(){const b=fbS();
   </section>`}
 /* ---------- Updates tab : newest first, one entry per release ---------- */
 const UPDATES=[
+  {v:'4.9',d:'12.11.2026',t:'Blockwerk: besser ziehen',items:[['f','Blockwerk am Handy: Der Stein sitzt beim Ziehen jetzt mittig und knapp über deinem Finger, statt weit darüber zu schweben.']]},
   {v:'4.8',d:'12.11.2026',t:'Notizen & Trading entfernt',items:[['n','Die Tabs Notizen und Trading wurden entfernt. Larsens World startet jetzt direkt im Casino.']]},
   {v:'4.7',d:'12.11.2026',t:'Daten aufs Handy (Fix)',items:[['f','Der Daten-Link bringt die Daten jetzt wirklich in die App auf dem Home-Bildschirm des iPhones.']]},
   {v:'4.6',d:'12.11.2026',t:'Daten aufs Handy',items:[['n','Ein Daten-Link bringt deine Daten jetzt auch in die Web-App auf dem Home-Bildschirm des iPhones.']]},
@@ -3039,7 +3040,7 @@ async function ghImportFromHash(){
 /* GitHub-Version: neue Versionen von selbst laden, aber nie mitten in einer Runde */
 function ghUpdBusy(){try{return (typeof czBusy==='function'&&czBusy())||(typeof FB!=='undefined'&&(FB.state==='play'||FB.state==='ready'))||(typeof WF!=='undefined'&&WF.spinning)}catch(e){return false}}
 /* Updates: version.txt im Repo mit APP_VERSION vergleichen, bei Abweichung einmal pro Version neu laden (nie mitten in einer Runde) */
-const APP_VERSION='4.8';let ghPending=false;
+const APP_VERSION='4.9';let ghPending=false;
 async function ghCheck(){if(ghPending)return;let v='';try{const r=await fetch('version.txt?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;v=(await r.text()).trim()}catch(e){return}
   if(!v||v===APP_VERSION)return;try{if(localStorage.getItem('lw:reloadedFor')===v)return}catch(e){}ghPending=true;ghApply(v)}
 function ghApply(v){if(ghUpdBusy()){setTimeout(()=>ghApply(v),3000);return}try{localStorage.setItem('lw:reloadedFor',v)}catch(e){}saveLocal();toast('Neue Version wird geladen…');setTimeout(()=>location.reload(),900)}
@@ -3131,8 +3132,9 @@ function bwUp(e){const D=BW.drag;if(!D||(e&&e.pointerId!==D.pid))return;BW.drag=
 document.addEventListener('pointerdown',e=>{const sl=e.target.closest&&e.target.closest('.bw-slot'),pe=sl&&sl.querySelector('.bw-piece');if(!pe||BW.drag||tab!=='block')return;const b=bwS();if(b.cur.over)return;const i=+pe.dataset.bwp;if(!b.cur.pieces[i])return;
   e.preventDefault();if(bjS().sound)unlockAudio();const G=bwGeo();if(!G)return;const pr=pe.getBoundingClientRect(),p=b.cur.pieces[i],cells=BW_SHAPES[p.s].c,R=Math.max(...cells.map(x=>x[0]))+1,C=Math.max(...cells.map(x=>x[1]))+1;
   const W=C*G.step-G.gap,H=R*G.step-G.gap,el=pe.cloneNode(true);el.classList.add('bw-fly');el.style.setProperty('--cs',G.cell+'px');el.style.setProperty('--gp',G.gap+'px');el.style.width=W+'px';el.style.height=H+'px';
-  const touch=e.pointerType!=='mouse',ox=(e.clientX-pr.left)/pr.width*W,oy=(e.clientY-pr.top)/pr.height*H;
-  BW.drag={i,el,src:pe,ox,oy,touch,lift:touch?Math.max(48,oy+28):0,s0:pr.width/W,moved:false,t:null,G,key:'',marked:[],x:e.clientX,y:e.clientY,raf:0,pid:e.pointerId};
+  /* Maus: Stein bleibt dort, wo man ihn angefasst hat. Finger: Stein sitzt mittig, knapp über der Fingerspitze (fester kleiner Abstand) */
+  const touch=e.pointerType!=='mouse',gapY=Math.max(14,G.cell*.55),ox=touch?W/2:(e.clientX-pr.left)/pr.width*W,oy=touch?H+gapY:(e.clientY-pr.top)/pr.height*H;
+  BW.drag={i,el,src:pe,ox,oy,touch,lift:0,s0:pr.width/W,moved:false,t:null,G,key:'',marked:[],x:e.clientX,y:e.clientY,raf:0,pid:e.pointerId};
   el.style.transform=`translate3d(${pr.left}px,${pr.top}px,0) scale(${pr.width/W})`;document.body.appendChild(el);pe.style.visibility='hidden';document.body.classList.add('bw-dragging');
   requestAnimationFrame(()=>{el.style.transition='transform .1s ease-out';bwFrame();setTimeout(()=>{if(BW.drag&&BW.drag.el===el)el.style.transition='none'},110)});
   document.addEventListener('pointermove',bwMove,{passive:false});document.addEventListener('pointerup',bwUp);document.addEventListener('pointercancel',bwUp)},{passive:false});
