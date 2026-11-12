@@ -919,19 +919,19 @@ button,a,[data-act],[data-tab]{touch-action:manipulation;-webkit-tap-highlight-c
 .bw-c{display:block;border-radius:22%;background:rgba(255,255,255,.045);box-shadow:inset 0 0 0 1px rgba(255,255,255,.03);aspect-ratio:1}
 .bw-c.f,.bw-c.gh{background:linear-gradient(145deg,color-mix(in srgb,var(--bc) 70%,#fff) 0%,var(--bc) 42%,color-mix(in srgb,var(--bc) 70%,#000) 100%);box-shadow:inset 0 2px 0 rgba(255,255,255,.45),inset 0 -3px 0 rgba(0,0,0,.28),0 2px 5px rgba(0,0,0,.35)}
 .bw-c.gh{opacity:.45}
-.bw-c.hl{filter:brightness(1.5) saturate(1.2);box-shadow:inset 0 2px 0 rgba(255,255,255,.6),0 0 12px color-mix(in srgb,var(--bc,#fff) 70%,transparent)}
+.bw-c.hl{box-shadow:inset 0 0 0 40px rgba(255,255,255,.3),inset 0 2px 0 rgba(255,255,255,.6)}
 .bw-c.hl:not(.f):not(.gh){background:rgba(255,255,255,.14)}
 .bw-c.pop{animation:bwPop .28s cubic-bezier(.2,1.6,.4,1)}
 @keyframes bwPop{0%{transform:scale(.6)}100%{transform:scale(1)}}
 .bw-c.clr{animation:bwClr .3s ease-in forwards}
-@keyframes bwClr{0%{filter:brightness(1)}35%{filter:brightness(2.4);transform:scale(1.12)}100%{filter:brightness(2);transform:scale(0);opacity:0}}
+@keyframes bwClr{0%{transform:scale(1)}35%{transform:scale(1.12);box-shadow:inset 0 0 0 40px rgba(255,255,255,.85)}100%{transform:scale(0);opacity:0;box-shadow:inset 0 0 0 40px rgba(255,255,255,.85)}}
 .bw-tray{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:min(100%,600px);min-height:130px}
 .bw-slot{display:grid;place-items:center;min-height:130px;border-radius:16px;background:rgba(255,255,255,.035)}
 .bw-piece{display:grid;grid-template-columns:repeat(var(--q),var(--ts,24px));grid-auto-rows:var(--ts,24px);gap:2px;padding:10px;margin:-10px;cursor:grab;touch-action:none;transition:transform .15s}
 .bw-piece:hover{transform:scale(1.06)}
 .bw-piece .bw-c{border-radius:24%}.bw-piece .bw-c.n{background:none;box-shadow:none}
-.bw-piece.nofit{opacity:.35;filter:grayscale(.6)}
-.bw-fly{position:fixed;left:0;top:0;z-index:80;pointer-events:none;grid-template-columns:repeat(var(--q),var(--cs))!important;grid-auto-rows:var(--cs)!important;gap:var(--gp)!important;transform-origin:0 0;filter:drop-shadow(0 12px 18px rgba(0,0,0,.45))}
+.bw-piece.nofit{opacity:.3}
+.bw-fly{position:fixed;left:0;top:0;z-index:80;pointer-events:none;grid-template-columns:repeat(var(--q),var(--cs))!important;grid-auto-rows:var(--cs)!important;gap:var(--gp)!important;transform-origin:0 0;contain:layout paint style;backface-visibility:hidden}
 .bw-fly .bw-c{border-radius:22%}
 body.bw-dragging{cursor:grabbing}
 .bw-pop{position:absolute;left:50%;top:42%;translate:-50% -50%;pointer-events:none;text-align:center;opacity:0;z-index:2}
@@ -950,7 +950,9 @@ body.bw-dragging{cursor:grabbing}
 @media (min-width:900px){.bw{display:grid;width:auto;max-width:none;grid-template-columns:auto 230px;grid-template-areas:"top top" "money money" "wrap tray" "foot foot";justify-content:center;align-items:start;column-gap:26px;row-gap:14px}
   .bw-top{grid-area:top}.bw-wrap{grid-area:wrap}.bw-tray{grid-area:tray;grid-template-columns:1fr;width:230px;align-self:stretch;align-content:space-evenly}.bw-foot{grid-area:foot;width:100%}}
 @media (min-width:700px){.bw-piece{--ts:30px}.bw-slot,.bw-tray{min-height:160px}}
-.bw-fly{will-change:transform}.bw-c{transition:filter .12s}
+.bw-fly{will-change:transform}
+body.bw-on .liquid i{animation-play-state:paused}
+.bw-piece.nofit{filter:none!important}
 </style>
 
 <div class="liquid" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -1206,7 +1208,7 @@ function render(){
   }
   if(tab==='chat')chFit();
   if(tab==='rad')wfFit();
-  if(tab==='block')bwFit();
+  document.body.classList.toggle('bw-on',tab==='block');if(tab==='block')bwFit();
   if(tab==='bird')fbMount();else if(typeof fbStop==='function')fbStop();
   animNext=false;
   if(popId){const c=v.querySelector(`.check[data-id="${popId}"]`);c&&c.classList.add('pop');popId=null}
@@ -2761,6 +2763,7 @@ function fbSettings(){const b=fbS();
   </section>`}
 /* ---------- Updates tab : newest first, one entry per release ---------- */
 const UPDATES=[
+  {v:'4.4',d:'12.11.2026',t:'Blockwerk flüssiger am iPhone',items:[['f','Blockwerk ruckelt am iPhone nicht mehr: teure Grafikfilter beim Ziehen und Auflösen ersetzt, der bewegte Hintergrund pausiert während des Spiels.']]},
   {v:'4.3',d:'12.11.2026',t:'Blockwerk: 10 € pro Reihe',items:[['n','Blockwerk zahlt jetzt 10 € für jede aufgelöste Reihe oder Spalte. Das Ablegen von Steinen bringt kein Geld mehr.']]},
   {v:'4.2',d:'12.11.2026',t:'Blockwerk: größer, flüssiger & mit Geld',items:[['n','Blockwerk bringt jetzt Geld fürs Casino: 25 € pro Punkt, direkt aufs Konto. Wie bei Flying Bird zählt es nicht zum Casino-Highscore.'],['n','Größeres Spielfeld und größere Steine. Das Feld passt sich an deinen Bildschirm an, am PC liegen die Steine rechts daneben.'],['n','Besseres Ziehen: Steine rasten an der nächsten passenden Stelle ein, fliegen beim Loslassen sauber ins Feld und lassen sich am ganzen Platz anfassen. Am Handy schweben sie über dem Finger.'],['f','Flüssiger: Bei jedem Zug wird nur noch das Spielfeld neu gezeichnet statt der ganzen Seite.'],['f','Während sich eine Reihe auflöst, kannst du schon den nächsten Stein greifen.'],['f','Scrollen beim Ziehen verschiebt die Vorschau nicht mehr.']]},
   {v:'4.1',d:'12.11.2026',t:'Neues Spiel: Blockwerk',items:[['n','Neuer Tab „Blöcke“ mit Blockwerk: Ziehe Blöcke auf das 8×8-Feld. Volle Reihen und Spalten lösen sich auf.'],['n','Mehrere Reihen auf einmal und Treffer hintereinander (Combo) geben Extrapunkte. Dein Rekord wird gespeichert, ein angefangenes Spiel auch.']]},
@@ -3013,7 +3016,7 @@ async function ghImportFromHash(){
 /* GitHub-Version: neue Versionen von selbst laden, aber nie mitten in einer Runde */
 function ghUpdBusy(){try{return (typeof czBusy==='function'&&czBusy())||(typeof FB!=='undefined'&&(FB.state==='play'||FB.state==='ready'))||(typeof WF!=='undefined'&&WF.spinning)}catch(e){return false}}
 /* Updates: version.txt im Repo mit APP_VERSION vergleichen, bei Abweichung einmal pro Version neu laden (nie mitten in einer Runde) */
-const APP_VERSION='4.3';let ghPending=false;
+const APP_VERSION='4.4';let ghPending=false;
 async function ghCheck(){if(ghPending)return;let v='';try{const r=await fetch('version.txt?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;v=(await r.text()).trim()}catch(e){return}
   if(!v||v===APP_VERSION)return;try{if(localStorage.getItem('lw:reloadedFor')===v)return}catch(e){}ghPending=true;ghApply(v)}
 function ghApply(v){if(ghUpdBusy()){setTimeout(()=>ghApply(v),3000);return}try{localStorage.setItem('lw:reloadedFor',v)}catch(e){}saveLocal();toast('Neue Version wird geladen…');setTimeout(()=>location.reload(),900)}
