@@ -1026,7 +1026,7 @@ function refreshNow(reason){
 }
 function defaultSettings(){return{preset:'auto',custom:null,blur:26,motion:true,currency:'€',accounts:''}}
 let animNext=true, popId=null;
-let tab='notizen', noteFilter='alle', noteQuery='', todoFilter='offen', calMonth=TODAY().slice(0,7), calSel=null;
+let tab='blackjack', noteFilter='alle', noteQuery='', todoFilter='offen', calMonth=TODAY().slice(0,7), calSel=null;
 
 /* ---------- storage ---------- */
 let db=null, coll=null, online=false, connecting=true;
@@ -1164,9 +1164,9 @@ function toast(t){const el=$('#toast');el.textContent=t;el.hidden=false;clearTim
 /* GitHub-Version (larsen140.github.io/Larsens-World): läuft ohne Claude-Konto, Daten nur im Browser; KI-Chat und Angebote-Suche gibt es dort nicht */
 const IS_GH=/github\.io$/i.test(location.hostname),GH_URL='https://larsen140.github.io/Larsens-World/',GH_OFF={angebote:1,chat:1},EXE_URL='https://github.com/Larsen140/Larsens-World/raw/main/pc/Larsens-World.exe';
 const IS_APP=(()=>{try{if(/[?&]app=1/.test(location.search))localStorage.setItem('lw:app','1');return localStorage.getItem('lw:app')==='1'}catch(e){return false}})();
-const HIDEABLE=IS_GH?{notizen:'Notizen',trading:'Trading'}:{notizen:'Notizen',trading:'Trading',angebote:'Angebote'};
+const HIDEABLE=IS_GH?{}:{angebote:'Angebote'};
 function visTabs(){const h=S.settings.hiddenTabs||{};return TABS.filter(([k])=>!h[k]&&!(IS_GH&&GH_OFF[k]))}
-const TABS=[['notizen','Notizen','notes'],['trading','Trading','trade'],['angebote','Angebote','tag'],['blackjack','Casino','spade'],['bird','Bird','bird'],['rad','Rad','wheel'],['block','Blöcke','blocks'],['chat','Chat','chat'],['updates','Updates','spark'],['optionen','Optionen','gear']];
+const TABS=[['angebote','Angebote','tag'],['blackjack','Casino','spade'],['bird','Bird','bird'],['rad','Rad','wheel'],['block','Blöcke','blocks'],['chat','Chat','chat'],['updates','Updates','spark'],['optionen','Optionen','gear']];
 function renderTabs(){
   const nav=$('#tabs'),V=visTabs();
   /* settings may arrive after the first paint: rebuild the bar when the visible tabs changed, and never stay on a hidden tab */
@@ -2776,6 +2776,7 @@ function fbSettings(){const b=fbS();
   </section>`}
 /* ---------- Updates tab : newest first, one entry per release ---------- */
 const UPDATES=[
+  {v:'4.8',d:'12.11.2026',t:'Notizen & Trading entfernt',items:[['n','Die Tabs Notizen und Trading wurden entfernt. Larsens World startet jetzt direkt im Casino.']]},
   {v:'4.7',d:'12.11.2026',t:'Daten aufs Handy (Fix)',items:[['f','Der Daten-Link bringt die Daten jetzt wirklich in die App auf dem Home-Bildschirm des iPhones.']]},
   {v:'4.6',d:'12.11.2026',t:'Daten aufs Handy',items:[['n','Ein Daten-Link bringt deine Daten jetzt auch in die Web-App auf dem Home-Bildschirm des iPhones.']]},
   {v:'4.5',d:'12.11.2026',t:'Flying Bird: Burger',items:[['n','Neue Figur bei Flying Bird: ein fliegender Burger mit Sesam-Brötchen, Salat, Käse und kleinen Flügeln. Mit Farbauswahl.']]},
@@ -3038,7 +3039,7 @@ async function ghImportFromHash(){
 /* GitHub-Version: neue Versionen von selbst laden, aber nie mitten in einer Runde */
 function ghUpdBusy(){try{return (typeof czBusy==='function'&&czBusy())||(typeof FB!=='undefined'&&(FB.state==='play'||FB.state==='ready'))||(typeof WF!=='undefined'&&WF.spinning)}catch(e){return false}}
 /* Updates: version.txt im Repo mit APP_VERSION vergleichen, bei Abweichung einmal pro Version neu laden (nie mitten in einer Runde) */
-const APP_VERSION='4.7';let ghPending=false;
+const APP_VERSION='4.8';let ghPending=false;
 async function ghCheck(){if(ghPending)return;let v='';try{const r=await fetch('version.txt?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;v=(await r.text()).trim()}catch(e){return}
   if(!v||v===APP_VERSION)return;try{if(localStorage.getItem('lw:reloadedFor')===v)return}catch(e){}ghPending=true;ghApply(v)}
 function ghApply(v){if(ghUpdBusy()){setTimeout(()=>ghApply(v),3000);return}try{localStorage.setItem('lw:reloadedFor',v)}catch(e){}saveLocal();toast('Neue Version wird geladen…');setTimeout(()=>location.reload(),900)}
@@ -3154,10 +3155,10 @@ function vSettings(){
   const c=currentColors()||{bg:'#eef2f7',text:'#121722',accent:'#0a84ff',blob1:'#7dd3fc',blob2:'#f9a8d4',blob3:'#a7f3d0'};
   const fields=[['bg','Hintergrund'],['text','Text'],['accent','Akzent / Buttons'],['blob1','Farbfleck 1'],['blob2','Farbfleck 2'],['blob3','Farbfleck 3']];
   return `<div class="view-head"><h2>Einstellungen</h2></div>
-  <section class="panel glass set-sec"><h3>Bereiche</h3>
+  ${Object.keys(HIDEABLE).length?`<section class="panel glass set-sec"><h3>Bereiche</h3>
     <p class="note-txt">Blende Bereiche aus, die du gerade nicht brauchst. Deine Daten bleiben gespeichert.</p>
     ${Object.entries(HIDEABLE).map(([k,l])=>`<label class="color" for="hide-${k}" style="cursor:pointer"><input type="checkbox" id="hide-${k}" data-hide="${k}" ${(S.settings.hiddenTabs||{})[k]?'':'checked'} style="width:20px;height:20px;accent-color:var(--accent)"> <span style="font-weight:600">${l} anzeigen</span></label>`).join('')}
-  </section>
+  </section>`:''}
   <section class="panel glass set-sec"><h3>Farbthema</h3>
     <div class="presets">${Object.entries(PRESETS).map(([k,p])=>{const v=p.v||{bg:'#eef2f7',blob1:'#7dd3fc',blob2:'#1d4ed8',accent:'#0a84ff'};return `<button class="preset" data-act="preset" data-k="${k}" aria-pressed="${!S.settings.custom&&S.settings.preset===k}">
       <div class="sw" style="background:radial-gradient(circle at 25% 30%,${v.blob1},transparent 60%),radial-gradient(circle at 80% 80%,${v.blob2},transparent 60%),${k==='auto'?'linear-gradient(135deg,#eef2f7 50%,#070a12 50%)':v.bg}"></div><span>${p.name}</span></button>`}).join('')}</div>
