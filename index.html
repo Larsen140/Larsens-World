@@ -2776,6 +2776,7 @@ function fbSettings(){const b=fbS();
   </section>`}
 /* ---------- Updates tab : newest first, one entry per release ---------- */
 const UPDATES=[
+  {v:'4.7',d:'12.11.2026',t:'Daten aufs Handy (Fix)',items:[['f','Der Daten-Link bringt die Daten jetzt wirklich in die App auf dem Home-Bildschirm des iPhones.']]},
   {v:'4.6',d:'12.11.2026',t:'Daten aufs Handy',items:[['n','Ein Daten-Link bringt deine Daten jetzt auch in die Web-App auf dem Home-Bildschirm des iPhones.']]},
   {v:'4.5',d:'12.11.2026',t:'Flying Bird: Burger',items:[['n','Neue Figur bei Flying Bird: ein fliegender Burger mit Sesam-Brötchen, Salat, Käse und kleinen Flügeln. Mit Farbauswahl.']]},
   {v:'4.4',d:'12.11.2026',t:'Blockwerk flüssiger am iPhone',items:[['f','Blockwerk ruckelt am iPhone nicht mehr: teure Grafikfilter beim Ziehen und Auflösen ersetzt, der bewegte Hintergrund pausiert während des Spiels.']]},
@@ -3018,34 +3019,33 @@ async function lwPaste(fromClip){let raw='';const t=document.getElementById('lw-
   if(!m){toast('Das ist kein gültiger Daten-Code.');return}
   if(KINDS.some(k=>S[k].some(x=>!x.example))&&!confirm('Daten übernehmen? Was hier schon gespeichert ist, wird ersetzt.'))return;
   try{await lwApply(await lwUnpack(m[1]))}catch(e){toast('Daten konnten nicht übernommen werden.')}}
-/* iPhone: Web-App auf dem Home-Bildschirm hat eigenen Speicher. Nach dem Import zeigt das Manifest auf eine Start-Adresse mit dem Daten-Code,
-   damit die Home-Bildschirm-App die Daten beim ersten Öffnen ebenfalls übernimmt (pro Datenstand nur einmal). */
-function ghInstallWithData(code){try{const abs=u=>new URL(u,GH_URL).href,m={name:'Larsens World',short_name:'Larsens World',start_url:GH_URL+'#lwimport='+code,scope:GH_URL,display:'standalone',background_color:'#0b0d12',theme_color:'#1a1550',lang:'de',
-  icons:[{src:abs('icon-192.png'),sizes:'192x192',type:'image/png'},{src:abs('icon-512.png'),sizes:'512x512',type:'image/png'}]};
-  let l=document.querySelector('link[rel=manifest]');if(!l){l=document.createElement('link');l.rel='manifest';document.head.appendChild(l)}l.href='data:application/manifest+json,'+encodeURIComponent(JSON.stringify(m))}catch(e){}}
+/* Daten-Link: in Safari übernehmen und den Code in der Adresse lassen (Startadresse für die Home-Bildschirm-App),
+   in der Home-Bildschirm-App einmal übernehmen (pro Datenstand nur einmal, damit später nichts überschrieben wird) */
 async function ghImportFromHash(){
-  const m=/^#lwimport=([A-Za-z0-9_-]+)/.exec(location.hash||'');if(!m)return;
-  try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}
-  const standalone=(()=>{try{return navigator.standalone===true||matchMedia('(display-mode: standalone)').matches}catch(e){return false}})();
-  try{const d=await lwUnpack(m[1]);if(!d||d.v!==1)throw new Error('Format');
+  const code=LW_IMPORT;if(!code)return;
+  try{history.replaceState(null,'',LW_STANDALONE?location.pathname:location.pathname+'?lwimport='+code)}catch(e){}
+  try{const d=await lwUnpack(code);if(!d||d.v!==1)throw new Error('Format');
     let done='';try{done=localStorage.getItem('lw:importedAt')||''}catch(e){}
-    if(done===String(d.at)){if(!standalone)ghInstallWithData(m[1]);return}
-    const has=KINDS.some(k=>S[k].length&&S[k].some(x=>!x.example));
-    if(has&&!confirm('Daten übernehmen? Was hier schon gespeichert ist, wird ersetzt.'))return;
-    KINDS.forEach(k=>S[k]=Array.isArray(d[k])?d[k]:[]);S.settings=Object.assign(defaultSettings(),d.settings||{});
-    try{localStorage.setItem('lw:importedAt',String(d.at))}catch(e){}
-    saveLocal();cacheSettings();applyTheme();render();toast('Alle Daten übernommen: '+S.note.length+' Notizen, '+S.trade.length+' Trades.');
-    if(!standalone)ghInstallWithData(m[1])}
+    if(done!==String(d.at)){
+      const has=KINDS.some(k=>S[k].length&&S[k].some(x=>!x.example));
+      if(has&&!confirm('Daten übernehmen? Was hier schon gespeichert ist, wird ersetzt.'))return;
+      KINDS.forEach(k=>S[k]=Array.isArray(d[k])?d[k]:[]);S.settings=Object.assign(defaultSettings(),d.settings||{});
+      try{localStorage.setItem('lw:importedAt',String(d.at))}catch(e){}
+      saveLocal();cacheSettings();applyTheme();render();toast('Alle Daten übernommen: '+S.note.length+' Notizen, '+S.trade.length+' Trades.')}
+    if(!LW_STANDALONE&&/iPhone|iPad|iPod/i.test(navigator.userAgent))setTimeout(()=>toast('Jetzt unten auf Teilen ⬆︎ → „Zum Home-Bildschirm“ tippen. Die App bekommt deine Daten mit.'),2600)}
   catch(e){toast('Daten konnten nicht übernommen werden.')}
 }
 /* GitHub-Version: neue Versionen von selbst laden, aber nie mitten in einer Runde */
 function ghUpdBusy(){try{return (typeof czBusy==='function'&&czBusy())||(typeof FB!=='undefined'&&(FB.state==='play'||FB.state==='ready'))||(typeof WF!=='undefined'&&WF.spinning)}catch(e){return false}}
 /* Updates: version.txt im Repo mit APP_VERSION vergleichen, bei Abweichung einmal pro Version neu laden (nie mitten in einer Runde) */
-const APP_VERSION='4.6';let ghPending=false;
+const APP_VERSION='4.7';let ghPending=false;
 async function ghCheck(){if(ghPending)return;let v='';try{const r=await fetch('version.txt?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;v=(await r.text()).trim()}catch(e){return}
   if(!v||v===APP_VERSION)return;try{if(localStorage.getItem('lw:reloadedFor')===v)return}catch(e){}ghPending=true;ghApply(v)}
 function ghApply(v){if(ghUpdBusy()){setTimeout(()=>ghApply(v),3000);return}try{localStorage.setItem('lw:reloadedFor',v)}catch(e){}saveLocal();toast('Neue Version wird geladen…');setTimeout(()=>location.reload(),900)}
-if(IS_GH){try{const h=document.head;[['manifest','manifest.webmanifest'],['apple-touch-icon','icon-180.png'],['icon','icon-192.png']].forEach(([r,u])=>{const l=document.createElement('link');l.rel=r;l.href=u;h.appendChild(l)});if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}}
+const LW_STANDALONE=(()=>{try{return navigator.standalone===true||matchMedia('(display-mode: standalone)').matches}catch(e){return false}})();
+const LW_IMPORT=(()=>{const m=/[?&#]lwimport=([A-Za-z0-9_-]+)/.exec(location.search+location.hash);return m?m[1]:''})();
+/* iPhone: Kommt jemand mit Daten-Link in Safari, KEIN Manifest einbinden. Dann speichert „Zum Home-Bildschirm“ die aktuelle Adresse (mit Code) als Startadresse */
+if(IS_GH){try{const h=document.head;[...(LW_IMPORT&&!LW_STANDALONE?[]:[['manifest','manifest.webmanifest']]),['apple-touch-icon','icon-180.png'],['icon','icon-192.png']].forEach(([r,u])=>{const l=document.createElement('link');l.rel=r;l.href=u;h.appendChild(l)});if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}}
 if(IS_GH){setTimeout(ghCheck,800);setInterval(ghCheck,120000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)ghCheck()});window.addEventListener('focus',()=>ghCheck())}
 
 /* ---------- Blockwerk: Blöcke auf ein 8×8-Feld legen, volle Reihen und Spalten lösen sich auf ---------- */
